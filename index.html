@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fréquentation FabLab</title>
+    <link rel="stylesheet" href="/style.css">
+    <meta http-equiv="refresh" content="10">
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Fréquentation FabLab</h1>
+        <div class="timestamp">Mise à jour: <span id="date"></span> à <span id="time"></span></div>
+        
+        <div class="stats">
+            <div class="stat">
+                <h2 id="today-count">0</h2>
+                <p>Aujourd'hui</p>
+            </div>
+            <div class="stat">
+                <h2 id="total-count">0</h2>
+                <p>Total</p>
+            </div>
+        </div>
+        
+        <div class="entries">
+            <h3>Derniers passages:</h3>
+            <div id="entries-list"></div>
+        </div>
+        
+        <div class="refresh">Page actualisée automatiquement tous les 10 secondes</div>
+    </div>
+
+    <script>
+        // Fetch data from server and update the page
+        async function updateData() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                // Update counts
+                document.getElementById('today-count').textContent = data.today_count;
+                document.getElementById('total-count').textContent = data.total_count;
+                
+                // Update timestamp
+                document.getElementById('date').textContent = data.current_date;
+                document.getElementById('time').textContent = data.current_time;
+                
+                // Update entries
+                const entriesList = document.getElementById('entries-list');
+                entriesList.innerHTML = '';
+                data.latest_entries.forEach(entry => {
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'entry';
+                    entryDiv.innerHTML = `<strong>${entry}</strong>`;
+                    entriesList.appendChild(entryDiv);
+                });
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+        
+        // Update data on page load and every 10 seconds
+        updateData();
+        setInterval(updateData, 10000);
+    </script>
+</body>
+</html>
