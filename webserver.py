@@ -6,6 +6,7 @@ Displays attendance figures on a web page accessible from the WiFi hotspot
 import socket
 import time
 import os
+import json
 from machine import Pin, I2C, SPI
 import SSD1306
 import urtc
@@ -89,142 +90,55 @@ def get_current_date():
     current_datetime = rtc.datetime()
     return f"{current_datetime.year:04d}-{current_datetime.month:02d}-{current_datetime.day:02d}"
 
-# ==================== HTML Page Generation ====================
-def generate_html():
-    """Generate the HTML page with attendance data"""
+def get_current_time():
+    """Get current time in HH:MM:SS format"""
+    current_datetime = rtc.datetime()
+    return f"{current_datetime.hour:02d}:{current_datetime.minute:02d}:{current_datetime.second:02d}"
+
+# ==================== API Data Endpoint ====================
+def get_api_data():
+    """Generate JSON data for API endpoint"""
     today_count = count_attendance_today()
     total_count = count_attendance_total()
     latest = get_latest_entries(10)
     
     current_date = get_current_date()
-    current_datetime = rtc.datetime()
-    current_time = f"{current_datetime.hour:02d}:{current_datetime.minute:02d}:{current_datetime.second:02d}"
+    current_time = get_current_time()
     
-    html = """
-    <!DOCTYPE html>
-    <html lang="fr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Fréquentation FabLab</title>
-        <style>
-            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-            body {{
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                min-height: 100vh;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                padding: 20px;
-            }}
-            .container {{
-                background: white;
-                border-radius: 15px;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-                padding: 40px;
-                max-width: 600px;
-                width: 100%;
-            }}
-            h1 {{
-                color: #333;
-                margin-bottom: 10px;
-                text-align: center;
-            }}
-            .timestamp {{
-                text-align: center;
-                color: #999;
-                font-size: 14px;
-                margin-bottom: 30px;
-            }}
-            .stats {{
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-                margin-bottom: 30px;
-            }}
-            .stat {{
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                padding: 20px;
-                border-radius: 10px;
-                text-align: center;
-            }}
-            .stat h2 {{
-                font-size: 32px;
-                font-weight: bold;
-                margin-bottom: 5px;
-            }}
-            .stat p {{
-                font-size: 14px;
-                opacity: 0.9;
-            }}
-            .entries {{
-                background: #f5f5f5;
-                padding: 20px;
-                border-radius: 10px;
-                max-height: 300px;
-                overflow-y: auto;
-            }}
-            .entries h3 {{
-                color: #333;
-                margin-bottom: 15px;
-                font-size: 16px;
-            }}
-            .entry {{
-                padding: 10px;
-                background: white;
-                margin-bottom: 8px;
-                border-radius: 5px;
-                font-size: 13px;
-                color: #555;
-                border-left: 4px solid #667eea;
-            }}
-            .entry strong {{
-                color: #333;
-            }}
-            .refresh {{
-                text-align: center;
-                margin-top: 20px;
-                font-size: 12px;
-                color: #999;
-            }}
-        </style>
-        <meta http-equiv="refresh" content="10">
-    </head>
-    <body>
-        <div class="container">
-            <h1>📊 Fréquentation FabLab</h1>
-            <div class="timestamp">Mise à jour: {date} à {time}</div>
-            
-            <div class="stats">
-                <div class="stat">
-                    <h2>{today}</h2>
-                    <p>Aujourd'hui</p>
-                </div>
-                <div class="stat">
-                    <h2>{total}</h2>
-                    <p>Total</p>
-                </div>
-            </div>
-            
-            <div class="entries">
-                <h3>Derniers passages:</h3>
-                {entries_html}
-            </div>
-            
-            <div class="refresh">Page actualisée automatiquement tous les 10 secondes</div>
-        </div>
-    </body>
-    </html>
-    """.format(
-        date=current_date,
-        time=current_time,
-        today=today_count,
-        total=total_count,
-        entries_html="".join([f'<div class="entry"><strong>{entry.strip()}</strong></div>' for entry in reversed(latest)])
-    )
-    return html
+    # Strip whitespace and reverse to show newest first
+    entries = [entry.strip() for entry in reversed(latest)]
+    
+    data = {
+        "today_count": today_count,
+        "total_count": total_count,
+        "current_date": current_date,
+        "current_time": current_time,
+        "latest_entries": entries
+    }
+    
+    return json.dumps(data)
+
+# ==================== File Serving ====================
+def read_file(filepath):
+    """Read file content from filesystem"""
+    try:
+        with open(filepath, "r") as f:
+            return f.read()
+    except:
+        return None
+
+def get_mime_type(filepath):
+    """Determine MIME type based on file extension"""
+    if filepath.endswith('.html'):
+        return 'text/html'
+    elif filepath.endswith('.css'):
+        return 'text/css'
+    elif filepath.endswith('.js'):
+        return 'application/javascript'
+    elif filepath.endswith('.json'):
+        return 'application/json'
+    else:
+        return 'text/plain'
 
 # ==================== Web Server ====================
 def start_web_server(port=80):
@@ -247,16 +161,56 @@ def start_web_server(port=80):
     
     return server_socket
 
+def parse_request(request_str):
+    """Parse HTTP request and extract the path"""
+    try:
+        lines = request_str.split('\r\n')
+        request_line = lines[0]
+        parts = request_line.split(' ')
+        if len(parts) >= 2:
+            path = parts[1]
+            return path
+    except:
+        pass
+    return '/'
+
 def handle_request(client_socket):
     """Handle incoming HTTP request"""
     try:
         request = client_socket.recv(1024).decode()
+        path = parse_request(request)
         
-        # Send HTTP response
-        response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n"
-        response += generate_html()
+        # Route handling
+        if path == '/' or path == '/index.html':
+            content = read_file('index.html')
+            if content:
+                mime_type = 'text/html'
+                response = f"HTTP/1.1 200 OK\r\nContent-Type: {mime_type}; charset=utf-8\r\nContent-Length: {len(content)}\r\n\r\n"
+                client_socket.sendall(response.encode() + content.encode())
+            else:
+                response = "HTTP/1.1 404 Not Found\r\n\r\nindex.html not found"
+                client_socket.sendall(response.encode())
         
-        client_socket.sendall(response.encode())
+        elif path == '/style.css':
+            content = read_file('style.css')
+            if content:
+                mime_type = 'text/css'
+                response = f"HTTP/1.1 200 OK\r\nContent-Type: {mime_type}\r\nContent-Length: {len(content)}\r\n\r\n"
+                client_socket.sendall(response.encode() + content.encode())
+            else:
+                response = "HTTP/1.1 404 Not Found\r\n\r\nstyle.css not found"
+                client_socket.sendall(response.encode())
+        
+        elif path == '/api/data':
+            data = get_api_data()
+            mime_type = 'application/json'
+            response = f"HTTP/1.1 200 OK\r\nContent-Type: {mime_type}\r\nContent-Length: {len(data)}\r\n\r\n"
+            client_socket.sendall(response.encode() + data.encode())
+        
+        else:
+            response = "HTTP/1.1 404 Not Found\r\n\r\nNot found"
+            client_socket.sendall(response.encode())
+            
     except Exception as e:
         print(f"Error handling request: {e}")
     finally:
