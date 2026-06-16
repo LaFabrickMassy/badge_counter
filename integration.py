@@ -5,6 +5,7 @@ import SSD1306
 import time
 import urtc
 import NFC_PN532 as nfc
+from music import play, imperial_march
 
 
 days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -83,6 +84,8 @@ def read_nfc(dev, tmot):
         
         print('Found card with UID:', [hex(i) for i in uid])
         print('Number_id: {}'.format(badge_ID))
+        play(imperial_march)
+        time.sleep(1)
         
 while True:
     read_nfc(pn532, 2000)
