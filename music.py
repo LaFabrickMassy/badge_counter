@@ -60,6 +60,27 @@ def note_to_freq(note):
 # MUSIQUE
 # =========================
 
+hello_world = [
+    ('A5', SIXTEENTH),
+    ('A5', SIXTEENTH),
+    ('A5', SIXTEENTH)
+]
+
+game_over = [
+    ('B3', SIXTEENTH),
+    ('A3', SIXTEENTH),
+    ('G3', SIXTEENTH),
+    ('F3', SIXTEENTH),
+    ('E3', SIXTEENTH),
+    ('D3', SIXTEENTH),
+    ('E3', SIXTEENTH),
+]
+bipbip = [
+    ('A5', SIXTEENTH),
+    ('A5', SIXTEENTH)
+]
+
+
 imperial_march = [
 
     # Intro
