@@ -325,20 +325,48 @@ class PN532:
         try:
             response = self.call_function(_COMMAND_INLISTPASSIVETARGET,
                                           params=[0x01, card_baud],
-                                          response_length=19,
+                                          response_length=256,
                                           timeout=timeout)
         except BusyError:
-            return None  # no card found!
+            return None, 0  # no card found!
         # If no response is available return None to indicate no card is present.
         if response is None:
             return None
         # Check only 1 card with up to a 7 byte UID is present.
         if response[0] != 0x01:
             raise RuntimeError('More than one card detected!')
+        
         if response[5] > 7:
             raise RuntimeError('Found card with unexpectedly long UID!')
         # Return UID of card.
         return response[6:6+response[5]]
+       
+    def read_passive_target_fablab(self, card_baud=_MIFARE_ISO14443A, timeout=1000):
+        """Wait for a MiFare card to be available and return its UID when found.
+        Will wait up to timeout seconds and return None if no card is found,
+        otherwise a bytearray with the UID of the found card is returned.
+        """
+        # Send passive read command for 1 card.  Expect at most a 7 byte UUID.
+        try:
+            response = self.call_function(_COMMAND_INLISTPASSIVETARGET,
+                                          params=[0x01, card_baud],
+                                          response_length=256,
+                                          timeout=timeout)
+        except BusyError:
+            return None, 0  # no card found!
+        # If no response is available return None to indicate no card is present.
+        if response is None:
+            return None, 0
+        # Check only 1 card with up to a 7 byte UID is present.
+        if response[0] != 0x01:
+            raise RuntimeError('More than one card detected!')
+        numbers = [i for i in response]
+        
+        if response[5] > 7:
+            raise RuntimeError('Found card with unexpectedly long UID!')
+        # Return UID of card.
+        return response[6:6+response[5]], len(numbers)
+    
 
     def ntag2xx_write_block(self, block_number, data):
         """Write a block of data to the card.  Block number should be the block
