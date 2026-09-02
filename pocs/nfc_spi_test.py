@@ -36,6 +36,7 @@ def read_nfc(dev, tmot):
         string_ID = '{}-{}-{}-{}'.format(*numbers)
         print('Found card with UID:', [hex(i) for i in uid])
         print('Number_id: {}'.format(string_ID))
+        time.sleep(1)
 
 while True:
     read_nfc(pn532, 2000)

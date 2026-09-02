@@ -5,9 +5,11 @@ import time
 import urtc
 from machine import I2C, Pin
 
+######################################################
 # Set the current time using a specified time tuple
 # Time tuple: (year, month, day, day of week, hour, minute, seconds, milliseconds)
-initial_time_tuple = (2026, 6, 16, 13, 26, 0, 0, 0)
+######################################################
+initial_time_tuple = (2026, 7, 29, 14, 2, 0, 0, 0)
 
 
 
@@ -15,8 +17,6 @@ initial_time_tuple = (2026, 6, 16, 13, 26, 0, 0, 0)
 i2c = I2C(1, scl=Pin(7), sda=Pin(6))
 rtc = urtc.DS3231(i2c)
 
-
-# Or get the local time from the system
 #initial_time_tuple = time.localtime()  # tuple (microPython)
 initial_time_seconds = time.mktime(initial_time_tuple)  # local time in seconds
 
