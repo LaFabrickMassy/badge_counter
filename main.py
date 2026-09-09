@@ -1,4 +1,7 @@
 from machine import Pin, I2C, SPI
+import machine
+import network
+import socket
 import SSD1306
 import urtc
 import time
@@ -7,6 +10,7 @@ import uos
 import NFC_PN532 as nfc
 from music import play, imperial_march, hello_world, game_over, bipbip
 from attendancemodel import AttendanceModel, BadgingStatus
+from webserver import WebService
 
 class BadgeCounter:
     
@@ -15,7 +19,7 @@ class BadgeCounter:
                  rtc_i2c=1, rtc_sda=6, rtc_scl=7,
                  sd_spi=0, sd_mosi=3, sd_miso=4, sd_sck=2, sd_cs=1,
                  nfc_spi=1, nfc_mosi=11, nfc_miso=12, nfc_sck=10, nfc_rst=16, nfc_cs=13, nfc_irq=17,
-                 buzzer=15):
+                 buzzer=15, wifi_ssid="BadgeCounter", wifi_password="fablab2026"):
         
         # display communication
         self.display_i2c = I2C(id=display_i2c, sda=Pin(display_sda), scl=Pin(display_scl), freq=400000)
@@ -43,6 +47,8 @@ class BadgeCounter:
         
         # buzzer
         self.buzzer = buzzer
+        self.wifi_ssid = wifi_ssid
+        self.wifi_password = wifi_password
 
         
     def init_display(self):
@@ -92,6 +98,30 @@ class BadgeCounter:
         self.model.read_data()
         self.model.export_stats_to_csv()
         return
+
+    def init_wifi_ap(self):
+        self.wlan = network.WLAN(network.AP_IF)
+        self.wlan.active(True)
+        self.wlan.config(
+            essid=self.wifi_ssid,
+            password=self.wifi_password,
+        )
+
+        while not self.wlan.active():
+            time.sleep_ms(100)
+
+        print("Wi-Fi access point started")
+        print("SSID:", self.wifi_ssid)
+        print("Address: http://{}/".format(self.wlan.ifconfig()[0]))
+    
+    def init_webservice(self):
+        socket_server = socket.socket()
+        socket_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        socket_server.bind(("0.0.0.0", 80))
+        socket_server.listen(1)
+        socket_server.setblocking(False)
+        
+        self.webservice = WebService(self.model, socket_server)
         
     def refresh_display(self):
         
@@ -132,9 +162,12 @@ class BadgeCounter:
         self.init_nfc()
         self.init_buzzer()
         self.init_data()
+        self.init_wifi_ap()
+        self.init_webservice()
         self.refresh_display()
         
         while(True):
+            self.webservice.poll()
             self.read_badge()
             self.refresh_display()
         
