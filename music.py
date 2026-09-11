@@ -16,6 +16,12 @@ QUARTER = 1 # Noire
 EIGHTH = 0.5 # Croche
 SIXTEENTH = 0.25 # Double croche
 
+Blanche = 2
+Noire = 1
+Croche_pointee = 0.75
+Croche = 0.5
+Double_croche = 0.25
+
 
 # =========================
 # CONVERSION NOTE -> FREQUENCE
@@ -90,7 +96,7 @@ marseillaise = [
     ('A5', 1), # la
     ('A5', 1), # pa-
     ('D5', 1.5), # -tri-
-    ('A#5', 0.5), # -i-
+    ('A#4', 0.5), # -i-
     ('G4', 0.5) # -e
 ]
 
@@ -110,62 +116,6 @@ imperial_march = [
     ('C4', SIXTEENTH),
 
     ('A3', HALF),
-
-    # Phrase 2
-    # ('E4', QUARTER),
-    # ('E4', QUARTER),
-    # ('E4', QUARTER),
-
-    # ('F4', EIGHTH + SIXTEENTH),
-    # ('C4', SIXTEENTH),
-
-    # ('G#3', QUARTER),
-
-    # ('F3', EIGHTH + SIXTEENTH),
-    # ('C4', SIXTEENTH),
-
-    # ('A3', HALF),
-
-    # # Développement
-    # ('A4', QUARTER),
-    # ('A3', EIGHTH),
-    # ('A3', SIXTEENTH),
-
-    # ('A4', QUARTER),
-    # ('G#4', EIGHTH),
-    # ('G4', SIXTEENTH),
-
-    # ('F#4', SIXTEENTH),
-    # ('F4', SIXTEENTH),
-    # ('F#4', EIGHTH),
-
-    # ('R', EIGHTH),
-
-    # ('A#3', EIGHTH),
-    # ('D#4', QUARTER),
-
-    # ('D4', EIGHTH),
-    # ('C#4', SIXTEENTH),
-    # ('C4', SIXTEENTH),
-
-    # ('B3', SIXTEENTH),
-    # ('C4', EIGHTH),
-
-    # ('R', EIGHTH),
-
-    # # Reprise
-    # ('F3', EIGHTH + SIXTEENTH),
-    # ('G#3', SIXTEENTH),
-
-    # ('F3', SIXTEENTH),
-    # ('A3', EIGHTH),
-
-    # ('C4', QUARTER),
-
-    # ('A3', EIGHTH),
-    # ('C4', QUARTER),
-
-    # ('E4', HALF),
 
 ]
 
@@ -225,52 +175,6 @@ soupe_aux_choux = [
     ('G4', 2),
 ]
 
-marseillaise = [
-
-  # Allons enfants de la Patrie
-    ('G4', 0.5),
-    ('G4', 0.5),
-    ('A4', 1),
-
-    ('D4', 1),
-    ('D4', 1),
-
-    ('E4', 0.5),
-    ('E4', 0.5),
-    ('F#4', 1),
-
-    ('G4', 2),
-
-    # Le jour de gloire est arrivé
-    ('G4', 0.5),
-    ('A4', 0.5),
-    ('B4', 1),
-
-    ('B4', 1),
-    ('A4', 0.5),
-    ('G4', 0.5),
-
-    ('F#4', 1),
-    ('D4', 1),
-
-    ('G4', 2),
-
-    # Contre nous de la tyrannie
-    ('B4', 0.5),
-    ('B4', 0.5),
-    ('C5', 1),
-
-    ('D5', 1),
-    ('B4', 1),
-
-    ('A4', 0.5),
-    ('G4', 0.5),
-
-    ('F#4', 1),
-    ('D4', 1),
-
-    ('G4', 2),
-]
 # =========================
 # LECTURE
 # =========================
@@ -310,6 +214,7 @@ def play(song, tempo=TEMPO):
 # =========================
 
 if __name__ == "__main__":
-    play(imperial_march)
+    play(marseillaise)
+    #play(imperial_march)
     #play(soupe_aux_choux, tempo=132 )
     #play(marseillaise, tempo=120)
