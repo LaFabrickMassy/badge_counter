@@ -10,12 +10,11 @@ TEMPO = 104
 BUZZER_PIN = 15
 
 # noire = 1
-WHOLE = 4
-HALF = 2
-QUARTER = 1
-EIGHTH = 0.5
-SIXTEENTH = 0.25
-
+WHOLE = 4 # Ronde
+HALF = 2 # Blanche
+QUARTER = 1 # Noire
+EIGHTH = 0.5 # Croche
+SIXTEENTH = 0.25 # Double croche
 
 
 # =========================
@@ -23,19 +22,20 @@ SIXTEENTH = 0.25
 # =========================
 
 NOTE_INDEX = {
-    'C': 0,
-    'C#': 1,
-    'D': 2,
-    'D#': 3,
-    'E': 4,
-    'F': 5,
-    'F#': 6,
-    'G': 7,
-    'G#': 8,
-    'A': 9,
-    'A#': 10,
-    'B': 11
+    'C': 0, # Do
+    'C#': 1, # Do diese
+    'D': 2, # Ré
+    'D#': 3, # Mi bémol
+    'E': 4, # Mi
+    'F': 5, # Fa
+    'F#': 6, # Fa diese
+    'G': 7, # Sol
+    'G#': 8, # Sol difference
+    'A': 9, # La
+    'A#': 10, # Si bemol
+    'B': 11 # Si
 }
+
 
 def note_to_freq(note):
     """
@@ -80,6 +80,19 @@ bipbip = [
     ('A5', SIXTEENTH)
 ]
 
+
+marseillaise = [
+    ('C4', 0.25), # Al-
+    ('C4', 0.37), # -lons
+    ('C4', 0.25), # en-
+    ('G4', 1), # -fants
+    ('G4', 1), # de
+    ('A5', 1), # la
+    ('A5', 1), # pa-
+    ('D5', 1.5), # -tri-
+    ('A#5', 0.5), # -i-
+    ('G4', 0.5) # -e
+]
 
 imperial_march = [
 
