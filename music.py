@@ -39,7 +39,10 @@ NOTE_INDEX = {
     'G#': 8, # Sol difference
     'A': 9, # La
     'A#': 10, # Si bemol
-    'B': 11 # Si
+    'B': 11, # Si
+
+
+
 }
 
 
@@ -86,6 +89,45 @@ bipbip = [
     ('A5', SIXTEENTH)
 ]
 
+cancan = [
+    ('D4', 1),  # re
+    ('D4', 1), # re
+    ('E4', 0.5), # mi
+    ('G4', 0.5), # sol
+    ('F4', 0.5), #fa
+    ('E4', 0.5), #mi
+    ('A4', 1), # la
+    ('A4', 1), # la
+
+    ('A4', 0.5), # la
+    ('B4', 0.5), # si
+    ('F4', 0.5), # fa
+    ('G4', 0.5), # sol
+    ('E4', 1), # mi
+    ('E4', 1), # mi
+]
+
+le_bon_la_brute = [
+    ('E4', 0.25),
+    ('A4', 0.25),
+    ('E4', 0.25),
+    ('A4', 0.25),
+    ('E4', 2),
+    ('R', 0.5),
+    ('C4', 1),
+    ('D4', 1),
+    ('A3', 2),
+    ('R', 0.5),
+    ('E4', 0.25),
+    ('A4', 0.25),
+    ('E4', 0.25),
+    ('A4', 0.25),
+    ('E4', 2),
+    ('R', 0.5),
+    ('C4', 1),
+    ('D4', 1),
+    ('G4', 2),
+]
 
 marseillaise = [
     ('C4', 0.25), # Al-
@@ -96,7 +138,7 @@ marseillaise = [
     ('A5', 1), # la
     ('A5', 1), # pa-
     ('D5', 1.5), # -tri-
-    ('A#4', 0.5), # -i-
+    ('B4', 0.5),#('A#4', 0.5), # -i-
     ('G4', 0.5) # -e
 ]
 
@@ -182,7 +224,7 @@ soupe_aux_choux = [
 buzzer = PWM(Pin(BUZZER_PIN))
 
 def play(song, tempo=TEMPO):
-    beat_time = 60 / TEMPO
+    beat_time = 60.0 / tempo
 
     for note, duration in song:
 
@@ -200,21 +242,25 @@ def play(song, tempo=TEMPO):
             # volume adapté buzzer passif
             buzzer.duty_u16(2000)
 
-            sleep(note_time * 0.90)
+            sleep(note_time * 0.95)
 
             # mini séparation entre notes
             buzzer.duty_u16(0)
 
-            sleep(note_time * 0.10)
+            sleep(note_time * 0.05)
 
     buzzer.duty_u16(0)
+
+
 
 # =========================
 # EXECUTION
 # =========================
 
 if __name__ == "__main__":
-    play(marseillaise)
+    #play(cancan, tempo=180)
+    play(le_bon_la_brute, tempo=104)
+    #play(marseillaise)
     #play(imperial_march)
     #play(soupe_aux_choux, tempo=132 )
-    #play(marseillaise, tempo=120)
+    play(marseillaise, tempo=120)
