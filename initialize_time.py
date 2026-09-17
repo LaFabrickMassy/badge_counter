@@ -9,7 +9,7 @@ from machine import I2C, Pin
 # Set the current time using a specified time tuple
 # Time tuple: (year, month, day, day of week, hour, minute, seconds, milliseconds)
 ######################################################
-initial_time_tuple = (2026, 7, 29, 14, 2, 0, 0, 0)
+initial_time_tuple = (2026, 9, 17, 13, 42, 0, 0, 0)
 
 
 
