@@ -8,7 +8,7 @@ import time
 import sdcard
 import uos
 import NFC_PN532 as nfc
-from music import play, imperial_march, hello_world, game_over, bipbip
+from buzzer import Buzzer, hello_world, game_over, bipbip
 from attendancemodel import AttendanceModel, BadgingStatus
 from webserver import WebService
 
@@ -19,7 +19,7 @@ class BadgeCounter:
                  rtc_i2c=1, rtc_sda=6, rtc_scl=7,
                  sd_spi=0, sd_mosi=3, sd_miso=4, sd_sck=2, sd_cs=1,
                  nfc_spi=1, nfc_mosi=11, nfc_miso=12, nfc_sck=10, nfc_rst=16, nfc_cs=13, nfc_irq=17,
-                 buzzer=15, wifi_ssid="BadgeCounter", wifi_password="fablab2026"):
+                 buzzer_pin=15, wifi_ssid="BadgeCounter", wifi_password="fablab2026"):
         
         # display communication
         self.display_i2c = I2C(id=display_i2c, sda=Pin(display_sda), scl=Pin(display_scl), freq=400000)
@@ -46,7 +46,7 @@ class BadgeCounter:
         self.nfc_spi = SPI(nfc_spi, baudrate=400000, sck=Pin(nfc_sck), mosi=Pin(nfc_mosi), miso=Pin(nfc_miso))
         
         # buzzer
-        self.buzzer = buzzer
+        self.buzzer = Buzzer(buzzer_pin)
         self.wifi_ssid = wifi_ssid
         self.wifi_password = wifi_password
 
@@ -87,9 +87,9 @@ class BadgeCounter:
         # Configure PN532 to communicate with MiFare cards
         self.pn532.SAM_configuration()
         
-        # TODO: proprifier music
     def init_buzzer(self):
-        play(hello_world)
+        # there is nothing to init, just play song
+        self.buzzer.play(hello_world)
         
     def init_data(self):
         # initialiser les données
@@ -145,26 +145,47 @@ class BadgeCounter:
             result = self.model.handle_event(uid, length)
             print(f"Result : {result}")
             if result == BadgingStatus.PASSBACK:
-                play(game_over)
+                self.buzzer.play(game_over)
                 self.refresh_display()
             elif result == BadgingStatus.NOT_THALES:
-                play(bipbip)
+                self.buzzer.play(bipbip)
                 self.refresh_display()
             elif result == BadgingStatus.OK:
-                play(imperial_march)
+                self.buzzer.play_random_song()
                 self.refresh_display()
                 self.model.export_stats_to_csv()
         
     def start(self):
-        self.init_display()
-        self.init_rtc()
-        self.init_sd()
-        self.init_nfc()
-        self.init_buzzer()
-        self.init_data()
-        self.init_wifi_ap()
-        self.init_webservice()
-        self.refresh_display()
+        try:
+            self.init_display()
+        except:
+            self.buzzer.play(game_over)
+            return
+
+        try:
+            self.init_nfc()
+        except:
+            # Common initialisation error
+            self.display.fill(0)
+            self.display.text("NFC error", 0, 0, 1)
+            self.display.show()
+            self.buzzer.play(game_over)
+            return
+
+        try:
+            self.init_rtc()
+            self.init_sd()          
+            self.init_data()
+            self.init_wifi_ap()
+            self.init_webservice()
+            self.refresh_display()
+            self.init_buzzer()
+        except:
+            self.display.fill(0)
+            self.display.text("Init error", 0, 0, 1)
+            self.display.show()
+            self.buzzer.play(game_over)
+            return
         
         while(True):
             self.webservice.poll()
