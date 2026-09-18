@@ -12,6 +12,10 @@ from buzzer import Buzzer, hello_world, game_over, bipbip
 from attendancemodel import AttendanceModel, BadgingStatus
 from webserver import WebService
 
+class DisplayState:
+    Counts = 0
+    Params = 1
+
 class BadgeCounter:
     
     def __init__(self, 
@@ -19,7 +23,7 @@ class BadgeCounter:
                  rtc_i2c=1, rtc_sda=6, rtc_scl=7,
                  sd_spi=0, sd_mosi=3, sd_miso=4, sd_sck=2, sd_cs=1,
                  nfc_spi=1, nfc_mosi=11, nfc_miso=12, nfc_sck=10, nfc_rst=16, nfc_cs=13, nfc_irq=17,
-                 buzzer_pin=15, wifi_ssid="BadgeCounter", wifi_password="fablab2026"):
+                 buzzer_pin=15, button_pin=14, wifi_ssid="BadgeCounter", wifi_password="fablab2026"):
         
         # display communication
         self.display_i2c = I2C(id=display_i2c, sda=Pin(display_sda), scl=Pin(display_scl), freq=400000)
@@ -47,6 +51,10 @@ class BadgeCounter:
         
         # buzzer
         self.buzzer = Buzzer(buzzer_pin)
+        self.button = Pin(button_pin, Pin.IN, Pin.PULL_UP)
+        self.button_value = self.button.value()
+        self.display_state = DisplayState.Counts
+
         self.wifi_ssid = wifi_ssid
         self.wifi_password = wifi_password
 
@@ -124,17 +132,29 @@ class BadgeCounter:
         self.webservice = WebService(self.model, socket_server)
         
     def refresh_display(self):
-        
-        current_datetime = self.rtc.datetime()
-        sdate = f"{current_datetime.year:04d}-{current_datetime.month:02d}-{current_datetime.day:02d}"
-        stime = f"{current_datetime.hour:02d}:{current_datetime.minute:02d}:{current_datetime.second:02d}"
-        nvisits = f"Visites: {self.model.visits()}"
 
-        self.display.fill(0) 
-        self.display.text(sdate, 0,0, 1)
-        self.display.text(stime, 0,10, 1)
-        self.display.text(nvisits, 0, 24, 1)
-        self.display.show()       
+        if self.display_state == DisplayState.Counts :   
+            current_datetime = self.rtc.datetime()
+            sdate = f"{current_datetime.year:04d}-{current_datetime.month:02d}-{current_datetime.day:02d}"
+            stime = f"{current_datetime.hour:02d}:{current_datetime.minute:02d}:{current_datetime.second:02d}"
+            nvisits = f"Visites: {self.model.visits()}"
+
+            self.display.fill(0) 
+            self.display.text(sdate, 0,0, 1)
+            self.display.text(stime, 0,10, 1)
+            self.display.text(nvisits, 0, 24, 1)
+            self.display.show()  
+        else :
+            self.display.fill(0) 
+            self.display.text("SSID :", 0,0, 1)
+            self.display.text(f"{self.wifi_ssid}", 0, 10, 1)
+            self.display.text("Pwd :", 0, 22, 1)
+            self.display.text(f"{self.wifi_password}", 0, 32, 1)
+            self.display.text("ip :", 0, 44, 1)
+            self.display.text(f"{self.wlan.ifconfig()[0]}", 0, 54, 1)
+            self.display.show()  
+
+
         
     def read_badge(self):
         uid, length = self.pn532.read_passive_target_fablab(timeout=1000) 
@@ -154,6 +174,14 @@ class BadgeCounter:
                 self.buzzer.play_random_song()
                 self.refresh_display()
                 self.model.export_stats_to_csv()
+
+    def check_button(self):
+        button_value = self.button.value()
+        if button_value != self.button_value: # button changed
+            self.button_value = button_value
+            if button_value == False: # button pressed
+                # switch diplay state
+                self.display_state = DisplayState.Counts if (self.display_state == DisplayState.Params) else DisplayState.Params
         
     def start(self):
         try:
@@ -190,6 +218,7 @@ class BadgeCounter:
         while(True):
             self.webservice.poll()
             self.read_badge()
+            self.check_button()
             self.refresh_display()
         
 if __name__ == "__main__":
