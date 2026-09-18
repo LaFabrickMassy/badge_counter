@@ -105,6 +105,16 @@ class BadgeCounter:
         self.model = AttendanceModel(rtc=self.rtc, datafilename='/sd/data.txt')
         self.model.read_data()
         self.model.export_stats_to_csv()
+        try:
+            filesystem_stats = uos.statvfs('/sd')
+            free_space = filesystem_stats[0] * filesystem_stats[4]
+            free_space_percent = (filesystem_stats[4] * 100) / filesystem_stats[2]
+            data_size = uos.stat(self.model.datafilename)[6]
+            print("\nSD card free space: {} Mbytes ({:.2f}%)".format(
+                free_space / (1024 * 1024), free_space_percent))
+            print("data.txt size: {} bytes\n".format(data_size))
+        except OSError as error:
+            print("Unable to read SD card usage: {}".format(error))
         return
 
     def init_wifi_ap(self):

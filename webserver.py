@@ -115,7 +115,18 @@ class WebService:
             part_headers, content = part.split("\r\n\r\n", 1)
             if content.endswith("\r\n"):
                 content = content[:-2]
-            with open(self.api.model.datafilename, "w") as file:
+            datafilename = self.api.model.datafilename
+            try:
+                with open(datafilename, "r") as file:
+                    previous_content = file.read()
+            except OSError:
+                previous_content = None
+            if previous_content is not None:
+                backup_datetime = self.get_rtc().replace("T", "_").replace(":", "-")
+                backup_filename = "{}.{}.bak".format(datafilename, backup_datetime)
+                with open(backup_filename, "w") as file:
+                    file.write(previous_content)
+            with open(datafilename, "w") as file:
                 file.write(content)
             return
 

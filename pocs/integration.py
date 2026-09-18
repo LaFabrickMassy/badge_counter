@@ -6,7 +6,7 @@ import time
 #import datetime
 import urtc
 import NFC_PN532 as nfc
-from music import play, imperial_march
+from buzzer import play, imperial_march
 import sdcard
 import uos
 

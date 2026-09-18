@@ -98,7 +98,7 @@ ADMIN_PAGE = """<!DOCTYPE html>
     <p><a href="/admin/download/data">Télécharger data.txt</a></p>
     <p><a href="/admin/download/stats">Télécharger stats.csv</a></p>
     <h2>Remplacer le fichier de log</h2>
-    <p><strong>Avertissement :</strong> l'envoi d'un fichier écrasera définitivement les données enregistrées dans <code>/sd/data.txt</code>.</p>
+    <p><strong>Avertissement :</strong> l'envoi d'un fichier remplacera <code>/sd/data.txt</code> et conservera l'ancienne version dans un fichier daté, par exemple <code>/sd/data.txt.2026-09-18_12-00-00.bak</code>.</p>
     <form id="upload-form" enctype="multipart/form-data">
         <label for="data-file">Fichier data.txt</label>
         <input id="data-file" name="file" type="file" accept=".txt,text/plain" required>
@@ -128,7 +128,7 @@ ADMIN_PAGE = """<!DOCTYPE html>
 
         document.getElementById("upload-form").addEventListener("submit", async function (event) {
             event.preventDefault();
-            if (!confirm("Attention : ce fichier va écraser toutes les données de /sd/data.txt. Continuer ?")) {
+            if (!confirm("Attention : ce fichier va remplacer /sd/data.txt. L'ancienne version sera sauvegardée dans un fichier daté. Continuer ?")) {
                 return;
             }
             const response = await fetch("/admin/upload/data", {
@@ -136,7 +136,7 @@ ADMIN_PAGE = """<!DOCTYPE html>
                 body: new FormData(event.target)
             });
             const data = await response.json();
-            message.textContent = data.ok ? "data.txt a été remplacé." : data.error;
+            message.textContent = data.ok ? "data.txt a été remplacé et l'ancienne version sauvegardée." : data.error;
         });
 
         loadRtc();
