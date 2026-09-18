@@ -54,6 +54,9 @@ class BadgeCounter:
         self.button = Pin(button_pin, Pin.IN, Pin.PULL_UP)
         self.button_value = self.button.value()
         self.display_state = DisplayState.Counts
+        self.webservice = None
+        self.socket_server = None
+        self.params_mode_started_at = None
 
         self.wifi_ssid = wifi_ssid
         self.wifi_password = wifi_password
@@ -133,13 +136,33 @@ class BadgeCounter:
         print("Address: http://{}/".format(self.wlan.ifconfig()[0]))
     
     def init_webservice(self):
-        socket_server = socket.socket()
-        socket_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        socket_server.bind(("0.0.0.0", 80))
-        socket_server.listen(1)
-        socket_server.setblocking(False)
+        self.socket_server = socket.socket()
+        self.socket_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.socket_server.bind(("0.0.0.0", 80))
+        self.socket_server.listen(1)
+        self.socket_server.setblocking(False)
         
-        self.webservice = WebService(self.model, socket_server)
+        self.webservice = WebService(self.model, self.socket_server)
+
+    def start_params_mode(self):
+        self.init_wifi_ap()
+        self.init_webservice()
+        self.params_mode_started_at = time.ticks_ms()
+
+    def stop_params_mode(self):
+        if self.socket_server is not None:
+            self.socket_server.close()
+            self.socket_server = None
+        self.webservice = None
+        self.params_mode_started_at = None
+        self.wlan.active(False)
+
+    def check_params_timeout(self):
+        if (self.display_state == DisplayState.Params and
+                self.params_mode_started_at is not None and
+                time.ticks_diff(time.ticks_ms(), self.params_mode_started_at) >= 10 * 60 * 1000):
+            self.display_state = DisplayState.Counts
+            self.stop_params_mode()
         
     def refresh_display(self):
 
@@ -192,6 +215,10 @@ class BadgeCounter:
             if button_value == False: # button pressed
                 # switch diplay state
                 self.display_state = DisplayState.Counts if (self.display_state == DisplayState.Params) else DisplayState.Params
+                if self.display_state == DisplayState.Params:
+                    self.start_params_mode()
+                else:
+                    self.stop_params_mode()
         
     def start(self):
         try:
@@ -214,8 +241,6 @@ class BadgeCounter:
             self.init_rtc()
             self.init_sd()          
             self.init_data()
-            self.init_wifi_ap()
-            self.init_webservice()
             self.refresh_display()
             self.init_buzzer()
         except:
@@ -226,9 +251,11 @@ class BadgeCounter:
             return
         
         while(True):
-            self.webservice.poll()
+            if self.webservice is not None:
+                self.webservice.poll()
             self.read_badge()
             self.check_button()
+            self.check_params_timeout()
             self.refresh_display()
         
 if __name__ == "__main__":
