@@ -22,10 +22,56 @@ HTML_PAGE = """<!DOCTYPE html>
         th:nth-child(1), td:nth-child(1) { width: 25%; }
         th:nth-child(2), td:nth-child(2) { width: 25%; }
         th:nth-child(3), td:nth-child(3) { width: 50%; }
+        .chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.8rem;
+            height: 18rem;
+            max-width: 700px;
+            margin-top: 2rem;
+            padding: 1rem 1rem 0;
+            border-left: 1px solid #999;
+            border-bottom: 1px solid #999;
+            overflow-x: auto;
+        }
+        .month-group {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            gap: 0.2rem;
+            min-width: 4.5rem;
+            height: 100%;
+        }
+        .bar {
+            position: relative;
+            width: 2rem;
+            min-height: 2px;
+        }
+        .visits-bar { background: #2563eb; }
+        .unique-bar { background: #f59e0b; }
+        .bar-value {
+            position: absolute;
+            bottom: 100%;
+            width: 100%;
+            text-align: center;
+            font-size: 0.7rem;
+        }
+        .month-label {
+            position: absolute;
+            left: 0;
+            bottom: -1.5rem;
+            width: 4.5rem;
+            text-align: center;
+            font-size: 0.75rem;
+        }
+        .legend { margin-top: 2rem; }
+        .legend span { margin-right: 1rem; }
+        .legend-visits { color: #2563eb; }
+        .legend-unique { color: #f59e0b; }
     </style>
 </head>
 <body>
-    <h1>Attendance statistics</h1>
+    <h1>Fréquentation du Fablab</h1>
     <p><a href="/admin">Administration du lecteur</a></p>
 
     <p>Total visits: <strong id="total-visits">...</strong></p>
@@ -42,7 +88,35 @@ HTML_PAGE = """<!DOCTYPE html>
         <tbody id="monthly-data"></tbody>
     </table>
 
+    <h2>Monthly chart</h2>
+    <div id="monthly-chart" class="chart" aria-label="Monthly attendance chart"></div>
+    <p class="legend">
+        <span class="legend-visits">&#9632; Visits</span>
+        <span class="legend-unique">&#9632; Unique visitors</span>
+    </p>
+
     <script>
+        function renderChart(monthly) {
+            const chart = document.getElementById("monthly-chart");
+            const maximum = Math.max.apply(null, monthly.map(function (item) {
+                return Math.max(item.visits, item.unique_visitors);
+            }).concat([1]));
+
+            chart.innerHTML = monthly.map(function (item) {
+                const visitsHeight = (item.visits / maximum) * 100;
+                const uniqueHeight = (item.unique_visitors / maximum) * 100;
+                return `<div class="month-group">
+                    <div class="bar visits-bar" style="height: ${visitsHeight}%">
+                        <span class="bar-value">${item.visits}</span>
+                    </div>
+                    <div class="bar unique-bar" style="height: ${uniqueHeight}%">
+                        <span class="bar-value">${item.unique_visitors}</span>
+                    </div>
+                    <span class="month-label">${item.month}</span>
+                </div>`;
+            }).join("");
+        }
+
         async function loadStatistics() {
             const response = await fetch("/api/stats");
             const stats = await response.json();
@@ -61,6 +135,7 @@ HTML_PAGE = """<!DOCTYPE html>
                         <td>${item.unique_visitors}</td>
                     </tr>`;
                 }).join("");
+            renderChart(stats.monthly);
         }
 
         loadStatistics();
