@@ -3,7 +3,7 @@
 ## Objectif
 
 Ce projet décrit un appareil qui permet de mesurer la fréquentation d'un lieu.  
-Il a pour prérequis que tous les visiteurs disposeraient d'un badge à technologie NFC (typiquement une entreprise), et badgent volontairement (présence nécessaire d'un panneau d'invitation au badgeage).
+Il a pour prérequis que tous les visiteurs disposeraient d'un badge à technologie NFC (typiquement salariés d'une entreprise), et badgent volontairement (présence nécessaire d'un panneau d'invitation au badgeage).
 
 ## Principe
 Les badgeages sont enregistrés, et les statistiques sont accessible sur un serveur web local (hotspot) sous forme de statistiques par période de temps (nombre de visites mensuelles, nombre de visiteurs uniques mensuels).  
