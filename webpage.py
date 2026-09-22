@@ -91,6 +91,7 @@ ADMIN_PAGE = """<!DOCTYPE html>
         <label for="rtc-datetime">Date et heure du module RTC</label>
         <input id="rtc-datetime" name="datetime" type="datetime-local" step="1" required>
         <button type="submit">Enregistrer l'heure</button>
+        <button id="sync-clock" type="button">Régler avec l'heure du navigateur</button>
     </form>
     <p id="message" role="status"></p>
 
@@ -115,6 +116,27 @@ ADMIN_PAGE = """<!DOCTYPE html>
             input.value = data.datetime;
         }
 
+        function getBrowserDateTime() {
+            const now = new Date();
+            const pad = value => String(value).padStart(2, "0");
+
+            return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
+                `T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        }
+
+        async function synchronizeClock() {
+            const datetime = getBrowserDateTime();
+            input.value = datetime;
+
+            const response = await fetch("/api/rtc", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ datetime: datetime })
+            });
+            const data = await response.json();
+            message.textContent = data.ok ? "Heure du serveur synchronisée." : data.error;
+        }
+
         document.getElementById("rtc-form").addEventListener("submit", async function (event) {
             event.preventDefault();
             const response = await fetch("/api/rtc", {
@@ -125,6 +147,8 @@ ADMIN_PAGE = """<!DOCTYPE html>
             const data = await response.json();
             message.textContent = data.ok ? "Heure enregistrée." : data.error;
         });
+
+        document.getElementById("sync-clock").addEventListener("click", synchronizeClock);
 
         document.getElementById("upload-form").addEventListener("submit", async function (event) {
             event.preventDefault();
