@@ -11,7 +11,7 @@
 | Module SD Card |  SD CARD module | 1 €  | AliExpress |
 | Ecran OLED |SSD1306 | 2 € | AliExpress |
 | Buzzer Passif | Passive buzzer | 1,50 € | AliExpress |
-| Bouton poussoir SPST | Bouton poussoir SPST| Broutilles | AliExpress |
+| Bouton poussoir SPST | Bouton poussoir SPST (single pole, single throw)| Broutilles | AliExpress |
 | Convertisseur DC / DC| LM2596 SMD | 1,10 € | AliExpress |
 | Adaptateur secteur | Adaptateur secteur universel | 10,90 € | https://www.gotronic.fr/art-adaptateur-pce600.htm|
 | Embase alimentation | Embase 5.5 x 2.1 | 0,40 € | https://www.gotronic.fr/art-embase-alim-sa215-14966.htm |
@@ -31,7 +31,7 @@
   - inserts laiton pour PLA M2.5
   - inserts laiton pour PLA M2
 
-## Matériels
+## Outils
 - Fer à souder
 - Pince coupante
 - Pince à sertir
