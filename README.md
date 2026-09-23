@@ -25,3 +25,9 @@ Il y a une page d’administration qui permet de
 - télécharger un fichier de synthèse des statistiques,
 - téléchargerle fichier de log (timestamp, id badge)
 - mais aussi d’écraser le fichier de log (attention, remise à zero des stats). Par sécurité, un backup est fait sur la carte, accessible uniquement physiquement (par lecture de la carte sd sur un pc).
+
+# Ajout d'une nouvelle musique
+1. décrire la partition sous forme d'une succession de notes. Chaque note est un couple (hauteur, durée). La hauteur de la note s'écrit suivant la notation anglo-saxone (voir documentation dans le fichier `songs.py` )
+2. Rajouter cette liste de couples sous forme d'une variable liste python dans le fichier `songs.py` (voir exemples existants)
+3. Rajouter cette variable à la liste des musiques `songs`, en précisant un tempo
+4. En utilisant vscode, uploader le fichier songs.py sur le pico, à l'aide d'un cordon USB-microUSB
