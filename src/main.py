@@ -224,6 +224,7 @@ class BadgeCounter:
         try:
             self.init_display()
         except:
+            print("Display error")
             self.buzzer.play(game_over)
             return
 
@@ -231,6 +232,7 @@ class BadgeCounter:
             self.init_nfc()
         except:
             # Common initialisation error
+            print("NFC error")
             self.display.fill(0)
             self.display.text("NFC error", 0, 0, 1)
             self.display.show()
@@ -244,6 +246,7 @@ class BadgeCounter:
             self.refresh_display()
             self.init_buzzer()
         except:
+            print("Init error")
             self.display.fill(0)
             self.display.text("Init error", 0, 0, 1)
             self.display.show()

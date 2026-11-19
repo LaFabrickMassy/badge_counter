@@ -3,6 +3,19 @@ from webpage import ADMIN_PAGE, HTML_PAGE
 import ujson
 
 
+MAX_REQUEST_SIZE = 64 * 1024
+MAX_HEADER_SIZE = 4096
+
+
+class BadRequest(Exception):
+    pass
+
+
+class RequestTooLarge(Exception):
+    def __init__(self, status):
+        self.status = status
+
+
 class WebService:
     def __init__(self, model, socket_server):
         self.api = AttendanceApi(model)
@@ -10,7 +23,14 @@ class WebService:
 
     def handle_request(self, request):
         first_line = request.split("\r\n")[0]
-        path = first_line.split(" ")[1]
+        request_line = first_line.split()
+        if len(request_line) != 3 or not request_line[2].startswith("HTTP/"):
+            return self.http_response(
+                "text/plain",
+                "Bad request",
+                status="400 Bad Request",
+            )
+        path = request_line[1].split("?", 1)[0]
 
         if path == "/":
             return self.http_response(
@@ -190,40 +210,97 @@ class WebService:
         
     def poll(self):
         try:
-            client, address = self.socket_server.accept()
+            client, _ = self.socket_server.accept()
         except OSError as error:
             if error.args and error.args[0] == 11:
                 return
-            raise
+            print("Web accept failed: {}".format(error))
+            return
 
         try:
-            client.setblocking(True)
-            client.settimeout(2)
-            request_data = self.receive_request(client)
-            if not request_data:
-                return
+            response = None
+            try:
+                client.setblocking(True)
+                client.settimeout(2)
+                request_data = self.receive_request(client)
+                if not request_data:
+                    return
 
-            response = self.handle_request(request_data)
-            client.send(response.encode())
+                response = self.handle_request(request_data)
+            except BadRequest:
+                response = self.http_response(
+                    "text/plain",
+                    "Bad request",
+                    status="400 Bad Request",
+                )
+            except RequestTooLarge as error:
+                if error.status == 431:
+                    status = "431 Request Header Fields Too Large"
+                else:
+                    status = "413 Payload Too Large"
+                response = self.http_response(
+                    "text/plain",
+                    "Request too large",
+                    status=status,
+                )
+            except (OSError, UnicodeError, ValueError, IndexError, MemoryError) as error:
+                print("Web request failed: {}".format(error))
+            if response is not None:
+                try:
+                    client.send(response.encode())
+                except OSError as error:
+                    print("Web response failed: {}".format(error))
         finally:
-            client.close()
+            try:
+                client.close()
+            except OSError as error:
+                print("Web client close failed: {}".format(error))
 
     def receive_request(self, client):
-        request_data = b""
+        request_data = bytearray()
         content_length = None
         while True:
             chunk = client.recv(1024)
             if not chunk:
                 break
-            request_data += chunk
+            request_data.extend(chunk)
             header_end = request_data.find(b"\r\n\r\n")
+            if header_end < 0:
+                if len(request_data) > MAX_HEADER_SIZE:
+                    raise RequestTooLarge(431)
+                continue
+            if header_end > MAX_HEADER_SIZE:
+                raise RequestTooLarge(431)
             if header_end >= 0 and content_length is None:
-                header_text = request_data[:header_end].decode()
                 try:
-                    content_length = int(self.get_header(header_text, "Content-Length"))
+                    header_text = bytes(request_data[:header_end]).decode()
+                except UnicodeError:
+                    raise BadRequest("Invalid request encoding")
+                try:
+                    content_length_header = self.get_header(header_text, "Content-Length")
                 except KeyError:
                     content_length = 0
+                else:
+                    if not content_length_header or len(content_length_header) > 10:
+                        raise BadRequest("Invalid Content-Length")
+                    for character in content_length_header:
+                        if character < "0" or character > "9":
+                            raise BadRequest("Invalid Content-Length")
+                    content_length = int(content_length_header)
+                if header_end + 4 + content_length > MAX_REQUEST_SIZE:
+                    raise RequestTooLarge(413)
             if (content_length is not None and
                     len(request_data) >= header_end + 4 + content_length):
                 break
-        return request_data.decode()
+        if not request_data:
+            return ""
+        if header_end < 0:
+            raise BadRequest("Incomplete request headers")
+        if content_length is not None and len(request_data) < header_end + 4 + content_length:
+            raise BadRequest("Incomplete request body")
+        if len(request_data) > MAX_REQUEST_SIZE:
+            raise RequestTooLarge(413)
+        try:
+            return bytes(request_data).decode()
+        except UnicodeError:
+            raise BadRequest("Invalid request encoding")

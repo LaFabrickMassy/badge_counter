@@ -174,7 +174,7 @@ ADMIN_PAGE = """<!DOCTYPE html>
     <p><a href="/admin/download/data">Télécharger data.txt</a></p>
     <p><a href="/admin/download/stats">Télécharger stats.csv</a></p>
     <h2>Remplacer le fichier de log</h2>
-    <p><strong>Avertissement :</strong> l'envoi d'un fichier remplacera <code>/sd/data.txt</code> et conservera l'ancienne version dans un fichier daté, par exemple <code>/sd/data.txt.2026-09-18_12-00-00.bak</code>.</p>
+    <p><strong>Avertissement :</strong> l'envoi d'un fichier de 64 Kio maximum remplacera <code>/sd/data.txt</code> et conservera l'ancienne version dans un fichier daté, par exemple <code>/sd/data.txt.2026-09-18_12-00-00.bak</code>.</p>
     <form id="upload-form" enctype="multipart/form-data">
         <label for="data-file">Fichier data.txt</label>
         <input id="data-file" name="file" type="file" accept=".txt,text/plain" required>
